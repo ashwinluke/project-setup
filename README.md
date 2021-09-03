@@ -21,8 +21,9 @@ Usage:
 **Note:**
 
 if you get "this node is not a swarm manager. Use "docker swarm init" or "docker swarm join" to connect this node to swarm and try again" error,
-please execute "docker swarm init".
+please execute "**docker swarm init**".
 This script will download the image automatically from the docker hug and start the services for us.
 
 Topics should be created to start the application
-kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic PublishProject
+
+**kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic PublishProject**
