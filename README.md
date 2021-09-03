@@ -1,5 +1,5 @@
 # project-setup
-This package will help us to set up kafka, elasticsearch, mariadb, project-service and project-search-service environment and its dependencies
+This package will help us to set up kafka, zookeeper, elasticsearch, mariadb, project-service and project-search-service environment and its dependencies
 
 # prerequisite 
 **docker** should up and run on your system 
@@ -38,11 +38,12 @@ To verify the running services
 
 **Note:**
 
-you might need to add host entries to access project-service and project-search-service
+You might need to add host entries to access project-service and project-search-service
 
-if you get "this node is not a swarm manager. Use "docker swarm init" or "docker swarm join" to connect this node to swarm and try again" error,
-please execute "**docker swarm init**".
-This script will download the image automatically from the docker hug and start the services for us.
+if you get the error message "This node is not a swarm manager. Use **"docker swarm init"** or **"docker swarm join"** to connect this node to swarm and try again",
+please execute the command "**docker swarm init**".
+
+This script will download the image automatically from the docker hub and start the services for us.
 
 Topics should be created to start the application
 
