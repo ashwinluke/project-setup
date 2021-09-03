@@ -4,7 +4,7 @@ This package will help us to set up kafka, elasticsearch, mariadb, project-servi
 # prerequisite 
 **docker** should up and run on your system 
 
-#steps to start 
+# steps to start 
 Checkout the branch and execute **setup.sh** (./setup.sh start)
 
 Usage:
