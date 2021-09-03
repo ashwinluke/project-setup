@@ -8,6 +8,62 @@ volumes:
   elastic-search-data:
 
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.3.1
+    hostname: zookeeper-1
+    expose:
+      - "12181"
+    ports:
+      - "12181:12181"
+    restart: always
+    environment:
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_CLIENT_PORT: 12181
+      ZOOKEEPER_SERVER_ID: 1
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data:rw
+      - zookeeper-tx-log:/var/lib/zookeeper/log:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 256M
+
+  kafka:
+    image: confluentinc/cp-kafka:5.3.1
+    hostname: kafka
+    expose:
+      - "9092"
+    ports:
+      - "9092:9092"
+    restart: always
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:12181
+      KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 16000
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CLIENT_IN_SWARM:PLAINTEXT,CLIENT_OUT_OF_SWARM:PLAINTEXT,INTERNAL:PLAINTEXT,REPLICATION:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+    volumes:
+      - kafka-data:/var/lib/kafka/data:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 2G
 
   db:
     image: mariadb:10.3.5
@@ -29,3 +85,82 @@ services:
       resources:
         limits:
           memory: 2G
+
+  elastic-search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.2.0
+    hostname: elasticsearch
+    restart: always
+    expose:
+      - "9200"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elastic-search-data:/usr/share/elasticsearch/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 2G
+
+  project-service:
+    image: santhoshas1990/project-service:latest
+    hostname: project-service
+    expose:
+      - "4202"
+    ports:
+      - "4202:4202"
+    restart: always
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - kafka
+      - db
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/projectservice?createDatabaseIfNotExist=true
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    command: [ "java", "-Dspring.application.name=projectservice", "-Xmx256m", "-jar", "./app.jar" ]
+
+  project-search-service:
+    image: santhoshas1990/project-search-service:latest
+    hostname: project-search-service
+    expose:
+      - "4203"
+    ports:
+      - "4203:4203"
+    restart: always
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - kafka
+      - elasticsearch
+      - db
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_ELASTICSEARCH_REST_URIS=elasticsearch:9200
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    command: [ "java", "-Dspring.application.name=projectsearchservice", "-Xmx256m", "-jar", "./app.jar" ]
