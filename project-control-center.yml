@@ -117,7 +117,7 @@ services:
           memory: 2G
 
   project-service:
-    image: santhoshas1990/project-service:latest
+    image: ashwinluke/project-service:latest
     hostname: project-service
     expose:
       - "4202"
@@ -141,7 +141,7 @@ services:
     command: [ "java", "-Dspring.application.name=projectservice", "-Xmx256m", "-jar", "./app.jar" ]
 
   project-search-service:
-    image: santhoshas1990/project-search-service:latest
+    image: ashwinluke/project-search-service:latest
     hostname: project-search-service
     expose:
       - "4203"
